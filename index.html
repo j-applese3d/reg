@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Our Wedding Registry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Italiana&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ===== CONFIG: paste your deployed Apps Script Web App URL here ===== */
+  /* (We read this from JS below — see API_URL) */
+
+  :root {
+    --bg: #f7f1ea;
+    --bg-soft: #efe6da;
+    --ink: #2b2622;
+    --ink-soft: #5a4f47;
+    --muted: #9b8d80;
+    --accent: #a05a4b;   /* dusty rose-brown */
+    --accent-soft: #d9a89a;
+    --line: #d8c8b8;
+    --claimed: #8a9a7b;  /* sage */
+    --card: #fffaf3;
+    --shadow: 0 1px 2px rgba(60,40,30,.04), 0 8px 30px rgba(60,40,30,.06);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 20% -10%, rgba(217,168,154,.25), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(184,176,144,.20), transparent 60%);
+  }
+
+  /* ===== Header ===== */
+  header.hero {
+    text-align: center;
+    padding: 90px 24px 40px;
+    position: relative;
+  }
+  .ampersand {
+    font-family: 'Italiana', serif;
+    font-size: clamp(70px, 14vw, 140px);
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+    margin: 0 0 12px;
+    letter-spacing: -.02em;
+  }
+  h1.title {
+    font-family: 'Italiana', serif;
+    font-weight: 400;
+    font-size: clamp(34px, 5vw, 56px);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin: 0 0 14px;
+  }
+  .subtitle {
+    color: var(--ink-soft);
+    font-style: italic;
+    max-width: 560px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+  }
+  .divider {
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px; margin: 28px auto 0; max-width: 220px;
+    color: var(--accent);
+  }
+  .divider::before, .divider::after {
+    content: ""; flex: 1; height: 1px; background: var(--line);
+  }
+  .divider svg { width: 14px; height: 14px; }
+
+  /* ===== Name input ===== */
+  .name-bar {
+    max-width: 520px;
+    margin: 28px auto 0;
+    text-align: center;
+  }
+  .name-bar label {
+    display: block;
+    font-size: .78rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-family: 'Inter', sans-serif;
+  }
+  .name-bar input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 4px 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    text-align: center;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .25s;
+  }
+  .name-bar input:focus { border-bottom-color: var(--accent); }
+  .name-bar .hint {
+    font-size: .78rem;
+    color: var(--muted);
+    margin-top: 8px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ===== Grid ===== */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 50px 24px 80px;
+  }
+  .status {
+    text-align: center;
+    color: var(--muted);
+    font-style: italic;
+    padding: 40px 0;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 28px;
+  }
+
+  /* ===== Card ===== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: var(--shadow);
+    transition: transform .3s ease, box-shadow .3s ease;
+    position: relative;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(60,40,30,.06), 0 18px 40px rgba(60,40,30,.10); }
+  .card .img-wrap {
+    aspect-ratio: 4 / 3;
+    background: var(--bg-soft);
+    overflow: hidden;
+    position: relative;
+  }
+  .card .img-wrap.no-image {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent-soft);
+  }
+  .card img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform .6s ease;
+  }
+  .card:hover img { transform: scale(1.04); }
+
+  .card .body {
+    padding: 22px 22px 20px;
+    display: flex; flex-direction: column; flex: 1;
+  }
+  .card h3 {
+    font-family: 'Italiana', serif;
+    font-weight: 400;
+    font-size: 1.45rem;
+    letter-spacing: .04em;
+    margin: 0 0 8px;
+    line-height: 1.2;
+  }
+  .card .details {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    flex: 1;
+    margin-bottom: 18px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .card .details a { color: var(--accent); }
+
+  .btn {
+    appearance: none; border: 1px solid var(--accent);
+    background: transparent; color: var(--accent);
+    padding: 11px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: .78rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background .2s, color .2s;
+  }
+  .btn:hover { background: var(--accent); color: #fff; }
+  .btn:disabled { opacity: .6; cursor: wait; }
+
+  .card.claimed { background: #f4f1ea; }
+  .card.claimed .img-wrap { opacity: .55; }
+  .card .claimed-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: .72rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--claimed);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card .claimed-tag::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--claimed);
+  }
+  .card .claimed-by {
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    font-size: .98rem;
+  }
+  .btn.ghost {
+    border-color: var(--line);
+    color: var(--muted);
+  }
+  .btn.ghost:hover { background: var(--line); color: var(--ink); }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg);
+    padding: 12px 22px;
+    border-radius: 2px;
+    font-family: 'Inter', sans-serif;
+    font-size: .82rem;
+    letter-spacing: .12em;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s, transform .3s;
+    z-index: 50;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 24px 50px;
+    color: var(--muted);
+    font-style: italic;
+    font-size: .95rem;
+  }
+
+  /* Reveal animation */
+  .card { opacity: 0; transform: translateY(8px); animation: rise .6s ease forwards; }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="ampersand">&amp;</div>
+  <h1 class="title">Our Registry</h1>
+  <p class="subtitle">With so much gratitude — please choose anything that speaks to you. Mark it as claimed so no one doubles up.</p>
+  <div class="divider">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg>
+  </div>
+
+  <div class="name-bar">
+    <label for="guest-name">Your name (optional)</label>
+    <input id="guest-name" type="text" placeholder="So we know who to thank" autocomplete="name" />
+    <div class="hint">Saved on this device only.</div>
+  </div>
+</header>
+
+<main>
+  <div id="status" class="status">Loading the registry…</div>
+  <div id="grid" class="grid" style="display:none"></div>
+</main>
+
+<footer>With love — thank you for celebrating with us.</footer>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  /* ============================================================
+     PASTE YOUR APPS SCRIPT WEB APP URL HERE:
+     ============================================================ */
+  const API_URL = "https://script.google.com/macros/s/AKfycbzdOjoYPwhmOKh34QCZMeCyEFpN1Z6oryd5dq7xqTISzUMLlqwJOyphStzr00_g2gAr/exec";
+
+  const grid = document.getElementById('grid');
+  const status = document.getElementById('status');
+  const nameInput = document.getElementById('guest-name');
+  const toastEl = document.getElementById('toast');
+
+  // Persist name
+  nameInput.value = localStorage.getItem('registry_name') || '';
+  nameInput.addEventListener('input', () => {
+    localStorage.setItem('registry_name', nameInput.value.trim());
+  });
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toastEl.classList.remove('show'), 2400);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  // Auto-link URLs inside details
+  function linkify(text) {
+    const esc = escapeHtml(text);
+    return esc.replace(/(https?:\/\/[^\s<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  }
+
+  async function api(action, params = {}) {
+    const url = new URL(API_URL);
+    url.searchParams.set('action', action);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    const res = await fetch(url.toString(), { method: 'GET' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
+
+  async function load() {
+    if (API_URL.includes('PASTE_YOUR')) {
+      status.textContent = 'Set API_URL in this file to your Apps Script Web App URL.';
+      return;
+    }
+    try {
+      const data = await api('list');
+      render(data.items);
+    } catch (e) {
+      status.textContent = 'Could not load registry: ' + e.message;
+    }
+  }
+
+  function render(items) {
+    if (!items.length) {
+      status.textContent = 'No items yet.';
+      return;
+    }
+    status.style.display = 'none';
+    grid.style.display = 'grid';
+    grid.innerHTML = '';
+    items.forEach((it, i) => {
+      const card = document.createElement('article');
+      card.className = 'card' + (it.claimedBy ? ' claimed' : '');
+      card.style.animationDelay = (i * 40) + 'ms';
+
+      const img = it.image
+        ? `<div class="img-wrap"><img loading="lazy" src="${escapeHtml(it.image)}" alt="${escapeHtml(it.name)}" onerror="this.parentElement.classList.add('no-image'); this.remove();"></div>`
+        : `<div class="img-wrap no-image">
+             <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20 21V10l-8-6-8 6v11"/><path d="M9 21v-7h6v7"/></svg>
+           </div>`;
+
+      const claimedBlock = it.claimedBy
+        ? `<div class="claimed-tag">Claimed</div>
+           <div class="claimed-by">${ it.claimedBy && it.claimedBy !== 'Anonymous' ? 'by ' + escapeHtml(it.claimedBy) : 'by a guest' }</div>
+           <button class="btn ghost" data-action="unclaim" data-id="${escapeHtml(it.id)}">Unclaim</button>`
+        : `<button class="btn" data-action="claim" data-id="${escapeHtml(it.id)}">I'll bring this</button>`;
+
+      card.innerHTML = `
+        ${img}
+        <div class="body">
+          <h3>${escapeHtml(it.name)}</h3>
+          <div class="details">${linkify(it.details || '')}</div>
+          ${claimedBlock}
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    grid.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', onAction);
+    });
+  }
+
+  async function onAction(e) {
+    const btn = e.currentTarget;
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = action === 'claim' ? 'Claiming…' : 'Unclaiming…';
+    try {
+      const who = nameInput.value.trim();
+      const res = await api(action, { id, who });
+      if (res.item && res.item.alreadyClaimed) {
+        toast('Someone just claimed that — refreshing.');
+      } else {
+        toast(action === 'claim' ? 'Thank you!' : 'Unclaimed.');
+      }
+      await load();
+    } catch (err) {
+      toast('Error: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>
